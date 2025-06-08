@@ -6,7 +6,7 @@ plt.rcParams['font.family'] = 'Times New Roman'
 
 
 def visualize_forward_selection():
-    with open('forward_selection_results.json', 'r') as f:
+    with open('backward_elimination_results.json', 'r') as f:
         data = json.load(f)
 
     results = data['results']
@@ -20,7 +20,7 @@ def visualize_forward_selection():
     colors = []
 
     for item in first_three:
-        features.append(item['features'])
+        features.append('')
         accuracies.append(item['accuracy'])
         colors.append('lightblue' if item['is_best'] else 'gray')
 
@@ -38,7 +38,7 @@ def visualize_forward_selection():
         colors.append('lightgray')
 
     for item in last_three:
-        features.append('')
+        features.append(item['features'])
         accuracies.append(item['accuracy'])
         colors.append('lightblue' if item['is_best'] else 'gray')
 
@@ -55,7 +55,7 @@ def visualize_forward_selection():
 
     plt.xlabel('Feature Set', fontfamily='Times New Roman', fontsize=16)
     plt.ylabel('Accuracy (%)', fontfamily='Times New Roman', fontsize=16)
-    plt.title('Forward Selection Results - Small dataset', fontfamily='Times New Roman', fontsize=18)
+    plt.title('Backward Elimination Results - Small dataset', fontfamily='Times New Roman', fontsize=18)
     plt.xticks(range(len(features)), features, rotation=0, ha='center', fontfamily='Times New Roman', fontsize=12)
     plt.yticks(fontfamily='Times New Roman', fontsize=12)
 
