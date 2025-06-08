@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import json
 
 
 def load_data(filename):
@@ -33,13 +34,15 @@ def leave_one_out_validation(data, features):
 
 
 def forward_selection(data):
-
     n_features = data.shape[1] - 1
     current_features = []
     best_features = []
     best_accuracy = 0
+    prev_accuracy = 0
+    results = []
 
-    print("Forward Selection Begins:")
+    print("Beginning search.")
+    print()
 
     for i in range(n_features):
         feature_to_add = None
@@ -49,8 +52,8 @@ def forward_selection(data):
             if k not in current_features:
                 # Try adding feature k
                 accuracy = leave_one_out_validation(data, current_features + [k])
-                print(
-                    f"\tUsing features {{{', '.join(map(lambda x: str(x + 1), current_features + [k]))}}} accuracy is {accuracy:.4f}")
+                feature_list = ','.join(map(lambda x: str(x + 1), current_features + [k]))
+                print(f"\tUsing feature(s) {{{feature_list}}} accuracy is {accuracy * 100:.1f}%")
 
                 if accuracy > best_so_far:
                     best_so_far = accuracy
@@ -58,27 +61,67 @@ def forward_selection(data):
 
         if feature_to_add is not None:
             current_features.append(feature_to_add)
-            print(
-                f"\nFeature set {{{', '.join(map(lambda x: str(x + 1), current_features))}}} was best.\n")
+            feature_list = ','.join(map(lambda x: str(x + 1), current_features))
+
+            if best_so_far < prev_accuracy and i > 0:
+                print(f"\n(Warning, Accuracy has decreased! Continuing search in case of local maxima)")
+
+            print(f"Feature set {{{feature_list}}} was best, accuracy is {best_so_far * 100:.1f}%")
+            print()
+
+            # Save result
+            results.append({
+                "features": f"{{{feature_list}}}",
+                "accuracy": best_so_far * 100,
+                "step": i + 1,
+                "is_best": False
+            })
 
             if best_so_far > best_accuracy:
                 best_accuracy = best_so_far
                 best_features = current_features.copy()
 
-    return best_features, best_accuracy
+            prev_accuracy = best_so_far
+
+    # Mark best result
+    if results:
+        best_idx = max(range(len(results)), key=lambda x: results[x]["accuracy"])
+        results[best_idx]["is_best"] = True
+
+    return best_features, best_accuracy, results
 
 
 def main():
     try:
-        filename = "CS205_small_Data__1.txt"
+        filename = "CS205_large_Data__17.txt"
         classes, features_data = load_data(filename)
         if len(features_data.shape) == 1:
             features_data = features_data.reshape(-1, 1)
         data = np.column_stack((classes, features_data))
-        best_features, best_accuracy = forward_selection(data)
-        print(f"Features: {best_features}, Accuracy: {best_accuracy:.4f}")
+        best_features, best_accuracy, results = forward_selection(data)
+
+        feature_list = ','.join(map(lambda x: str(x + 1), best_features))
+        print(
+            f"Finished search!! The best feature subset is {{{feature_list}}}, which has an accuracy of {best_accuracy * 100:.1f}%")
+
+        # Save results to JSON
+        json_data = {
+            "title": "Forward Selection Results",
+            "results": results,
+            "best_result": {
+                "features": f"{{{feature_list}}}",
+                "accuracy": best_accuracy * 100
+            }
+        }
+
+        with open('forward_selection_results.json', 'w') as f:
+            json.dump(json_data, f, indent=2)
+
+        print("Results saved to forward_selection_results.json")
+
     except:
         print("Error")
+
 
 if __name__ == "__main__":
     main()
